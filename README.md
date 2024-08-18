@@ -51,3 +51,31 @@
 
 摄像机系统利用**骨骼空间**计算出某一个位置，将这个位置坐标转换到**世界坐空间**上
 
+新建 `ALS_Camera_BPI` 用于定义相机接口，由 `BaseCharacter` 来实现这些接口
+
+> 子类可以重写这些接口的实现
+
+```cpp
+// 函数名 参数 => 返回类型
+
+// 获取相机的参数 TP_FOV 第三人称的 FOV，FP_FOV 第一人称的 FOV，bRightShoulder 是否在右肩
+BPI_Get_CameraParameters() => float TP_FOV, float FP_FOV, float bRightShoulder
+
+// 获取相机朝向目标 ReturnValue 目标坐标
+BPI_Get_FP_CameraTarget() => FVector ReturnValue
+
+// 获取第三人称锚点目标的 Transform
+BPI_Get_3P_PivotTarget() => FTransform ReturnValue
+
+// 获取第三人称的检测参数 
+BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType TraceChannel
+```
+| 函数名 | 实现 |
+| --- | --- |
+| BPI_Get_CameraParameters | ![](Image/010.png) |
+| BPI_Get_FP_CameraTarget | ![](Image/008.png) |
+| BPI_Get_3P_PivotTarget | ![](Image/009.png) |
+| BPI_Get_3P_TraceParams | ![](Image/007.png) | 
+
+![](Image/006.png)
+
