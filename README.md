@@ -77,5 +77,14 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 | BPI_Get_3P_PivotTarget | ![](Image/009.png) |
 | BPI_Get_3P_TraceParams | ![](Image/007.png) | 
 
+在 `ALS_Character` 中对上述函数进行重写
+
+| 函数名 | 函数体 |
+| --- | --- |
+| BPI_Get_3P_PivotTarget | ![](Image/012.png) |
+| BPI_Get_FP_CameraTarget | ![](Image/013.png) |
+| BPI_Get_3P_TraceParams | ![](Image/014.png) |
+
 ![](Image/006.png)
 
+`ALS` 的添加了一些虚拟骨骼用于绑定和定位
