@@ -115,5 +115,57 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 **综上所述，在 `Camera` 的骨骼中定义曲线名称，在动画蓝图中计算曲线对应的值，在 `PlayerCameraManager` 中根据曲线的值和目标坐标进行相机的坐标和朝向计算**
 
-### 坐标计算
+### PlayerCameraManager 中的计算
+
+`PlayerCameraManager` 中的计算分文两部分：**初始化** 和 **Tick更新**
+
+在 `OnPossess` 的进行初始化操作
+
+在 `ALS_PlayerCameraManager` 中，当绑定到对象后会触发 `OnPossess` 事件并将绑定的 `Pawn` 作为参数传递
+
+为了方便使用，直接将其值传递给 `Camera` 的动画蓝图
+
+![](Image/019.png)
+
+
+在 `BlueprintUpdateCamera` 中进行每帧更新的计算操作
+
+![](Image/020.png)
+
+如果控制的角色含义 `ALG_Character` 的 `Tag` 表示这是使用 ALS 动画蓝图的对象，走 `Custom Camera Behavior` 计算，否则走父类的计算流程(也就是默认流程)
+
+所以计算的核心还是在 `Custom Camera Behavior`
+
+![](Image/021.png)
+
+- `RootPoint`: 相机追踪目标(ViewTarget)的Root点，一般就是目标的根节点
+- `PivotPoint`：枢纽点，相机会围绕这个点进行旋转
+- `LooAtPoint`：看向点，相机会始终注视着这个位置
+
+![](Image/011.png)
+
+> 红色球为 `PivotPoint`、绿色球为 `RootPoint`、蓝色球为 `LookAtPoint`
+
+其实 ALS 的作者注释写的很全面，在 `Custom Camera Behavior` 函数中分为 8 步
+
+1. 通过接口初始化本次计算的数据
+2. 计算相机平滑旋转：通过计算当前相机旋转和控制器旋转的插值
+3. 计算相机平滑移动的坐标和朝向
+4. 计算注视点
+5. 计算相机最终的坐标
+6. 通过射线检测，防止摄像机穿模
+7. 绘制 Debug 球体
+8. 计算最终返回值
+
+> 上面的计算使用到了曲线的数值
+
+### Camera 的动画蓝图
+
+![](Image/022.png)
+
+每帧更新属性状态数值，在根据状态的不同， `Blend` 出各个 `Curve` 的数值
+
+![](Image/023.png)
+
+可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
 
