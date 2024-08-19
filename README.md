@@ -115,6 +115,16 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 **综上所述，在 `Camera` 的骨骼中定义曲线名称，在动画蓝图中计算曲线对应的值，在 `PlayerCameraManager` 中根据曲线的值和目标坐标进行相机的坐标和朝向计算**
 
+### Camera 的动画蓝图
+
+![](Image/022.png)
+
+每帧更新属性状态数值，在根据状态的不同， `Blend` 出各个 `Curve` 的数值
+
+![](Image/023.png)
+
+可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
+
 ### PlayerCameraManager 中的计算
 
 `PlayerCameraManager` 中的计算分文两部分：**初始化** 和 **Tick更新**
@@ -158,14 +168,3 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 8. 计算最终返回值
 
 > 上面的计算使用到了曲线的数值
-
-### Camera 的动画蓝图
-
-![](Image/022.png)
-
-每帧更新属性状态数值，在根据状态的不同， `Blend` 出各个 `Curve` 的数值
-
-![](Image/023.png)
-
-可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
-
