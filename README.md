@@ -35,6 +35,10 @@
 
 3C：`Camera`、`Character`、`Controller`，即相机、角色和控制器
 
+`Camera` 摄像机需要关注两个点：相机坐标、相机朝向。通过设置这坐标和朝向可以决定我们最终得到的表现效果
+
+`ALS` 项目中使用曲线和玩家骨骼坐标来定位相机坐标，实现相机平滑移动的效果
+
 之前在角色的 `Class Default` 中关闭了 **控制器旋转Yaw** 是为了后面能够单独控制相机旋转
 
 继承 `PlayerCameraManager` 创建 `ALS_PlayerCameraManager`，并添加 `ALS` 项目中自带的 `Camera` 骨骼网格体
@@ -88,3 +92,28 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 ![](Image/006.png)
 
 `ALS` 的添加了一些虚拟骨骼用于绑定和定位
+
+上面这些接口都是方便计算 `Camera` 相机的坐标和朝向的
+
+曲线有多种添加方式：可以新建 Curve 曲线、可以在动画资产中添加曲线、可以在骨骼中添加曲线
+
+`ALS` 的相机在骨骼中添加曲线，在 `Curves` 框中直接右键就可以添加曲线
+
+![](Image/015.png)
+
+这里定义的曲线，在动画蓝图中可以直接获取并对值进行 `Blend`
+
+![](Image/016.png)
+
+![](Image/017.png)
+
+> 在 `Modify Curve` 节点上右键可以添加曲线和设置曲线的值
+
+![](Image/018.png)
+
+> 在蓝图中可以通过 `Get Curve Value` 来获取曲线的值
+
+**综上所述，在 `Camera` 的骨骼中定义曲线名称，在动画蓝图中计算曲线对应的值，在 `PlayerCameraManager` 中根据曲线的值和目标坐标进行相机的坐标和朝向计算**
+
+### 坐标计算
+
