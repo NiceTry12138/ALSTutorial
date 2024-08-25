@@ -127,6 +127,8 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
 
+
+
 #### PlayerCameraManager 中的计算
 
 `PlayerCameraManager` 中的计算分文两部分：**初始化** 和 **Tick更新**
@@ -185,13 +187,13 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 ![](Image/026.png)
 
-通过相机的朝向和玩家 `Controller` 的朝向插值计算出 `TargetCameraRotation`
+通过相机的朝向和玩家 `Controller` 的朝向插值计算出 `TargetCameraRotation`，插值计算能够让相机旋转更加平滑
 
-`RotationLogSpeed` 是相机骨骼中定义的曲线，在相机的动画蓝图中通过 `Modify Curve` 来控制值，其值为 20
+`RotationLogSpeed` 是相机骨骼中定义的曲线，在相机的动画蓝图中通过 `Modify Curve` 来控制值，其值为 20，可以修改 `Interp Speed` 值为 1 查看效果变化
 
 ![](Image/027.png)
 
-通过当前的 `Pivot Taret` 的 `Transform` 和上一帧的 `Smoothed Pivot Target` 配合 `PivotLagSpeed_X`、`PivotLagSpeed_Y`、`PivotLagSpeed_Z` 插值计算出当前` Smoothed Pivot Target` 的 `Location`
+通过当前的 `Pivot Target` 的 `Transform` 和上一帧的 `Smoothed Pivot Target` 配合 `PivotLagSpeed_X`、`PivotLagSpeed_Y`、`PivotLagSpeed_Z` 插值计算出当前` Smoothed Pivot Target` 的 `Location`
 
 ![](Image/028.png)
 
