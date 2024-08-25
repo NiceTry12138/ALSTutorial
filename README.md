@@ -1,5 +1,7 @@
 # ALSTutorial
 
+## ALS 项目分析
+
 ![](Image/001.png)
 
 如上图所示，为 ALS 项目的表现效果
@@ -31,7 +33,7 @@
 
 继承 `CharacterBase` 创建 `ALS_Character` 的子类用作玩家，设置 Tag 为 `ALS_Character`；关闭 **控制器旋转Yaw**
 
-## 摄像机
+### 摄像机
 
 3C：`Camera`、`Character`、`Controller`，即相机、角色和控制器
 
@@ -115,7 +117,7 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 **综上所述，在 `Camera` 的骨骼中定义曲线名称，在动画蓝图中计算曲线对应的值，在 `PlayerCameraManager` 中根据曲线的值和目标坐标进行相机的坐标和朝向计算**
 
-### Camera 的动画蓝图
+#### Camera 的动画蓝图
 
 ![](Image/022.png)
 
@@ -125,7 +127,7 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
 
-### PlayerCameraManager 中的计算
+#### PlayerCameraManager 中的计算
 
 `PlayerCameraManager` 中的计算分文两部分：**初始化** 和 **Tick更新**
 
@@ -154,7 +156,10 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 ![](Image/011.png)
 
-> 红色球为 `PivotPoint`、绿色球为 `RootPoint`、蓝色球为 `LookAtPoint`
+- 绿色球为 `RootPoint`，其坐标是 `head` 和 `root` 的中心点
+- 红色球为 `Smmothed Pivot Target`，是通过根据 `RootPoint` 插值计算出的平滑点
+- 蓝色球为 `Pivot Point` 即珍重的枢纽点，相机围绕该点旋转
+- 相机坐标为 `Target Camera Location`，根据 `Pivot Point` 坐标和相机旋转计算出的坐标
 
 其实 ALS 的作者注释写的很全面，在 `Custom Camera Behavior` 函数中分为 8 步
 
@@ -168,3 +173,45 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 8. 计算最终返回值
 
 > 上面的计算使用到了曲线的数值
+
+
+![](Image/025.png)
+
+通过接口获取 
+
+- `Pivot Target` 其坐标是 `head` 和 `root` 骨骼坐标的中点、旋转是角色当前旋转角度
+- `FPTarget` 是骨骼 `FP_Camera` 点的坐标
+- `TPFOV` 和 `FPFOV` 是设定值，默认为 90
+
+![](Image/026.png)
+
+通过相机的朝向和玩家 `Controller` 的朝向插值计算出 `TargetCameraRotation`
+
+`RotationLogSpeed` 是相机骨骼中定义的曲线，在相机的动画蓝图中通过 `Modify Curve` 来控制值，其值为 20
+
+![](Image/027.png)
+
+通过当前的 `Pivot Taret` 的 `Transform` 和上一帧的 `Smoothed Pivot Target` 配合 `PivotLagSpeed_X`、`PivotLagSpeed_Y`、`PivotLagSpeed_Z` 插值计算出当前` Smoothed Pivot Target` 的 `Location`
+
+![](Image/028.png)
+
+这里需要注意的是 `Calculate Axis Independent Lag` 函数的实现，没太懂 `UnRotate Vector` 和 `Rotate Vector`，但是直接使用 `Current Location`、`Target Location`、`Log Speeds` 进行插值计算，也可以得到相似的效果
+
+![](Image/029.png)
+
+根据 `Smoothed Pivo Taret` 的 `Rotation` 获得当前朝向的前、右、上三个方向的向量，再根据 `PivotOffset_X`、`PivotOffset_Y`、`PivotOffset_Z` 分别计算各个轴的值，再叠加 `Smoothed Pivot Target` 的坐标，计算出真正的 `Pivot Location`
+
+> X 轴是前后、Y 轴是左右、Z 轴是上下
+
+![](Image/030.png)
+
+根据 `Target Camera Rotation` 相机朝向计算出前、右、上三个方向的向量，再根据 `CameraOffset_X`、`CameraOffset_Y`、`CameraOffset_Z` 计算出偏移值，最后叠加到 `Pivot Location` 得到真正的相机坐标
+
+![](Image/031.png)
+
+![](Image/024.png)
+
+如图上图所示完成了第6步，使用射线检测避免了相机穿模和相机在墙后的情况
+
+### 角色动画蓝图
+
