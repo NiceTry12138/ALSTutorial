@@ -308,10 +308,31 @@ Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行
 
 ##### Grounded
 
+![](Image/048.png)
 
+直接使用了 `Main Grounded States` Pose
 
 #### Main Grounded States
 
 ![](Image/038.png)
 
-在 `Main Movement States` 动画状态机中的 `Grounded` 引用了
+`Main Grounded States` 接受 `Main grounded States` 状态机的输出
+
+![](Image/049.png)
+
+状态切换逻辑很明显
+
+`Entry` 是一个空白状态， 空白节点用于在输入时拾取姿态（基于权重最大的BasePose动画曲线）。它还使用固定条目状态枚举来输入条目覆盖状态，以从其他操作（如滚动）转换
+
+根据进入 Entry 时 `GroundedEntryState` 的值选择 `From Roll` 或者 `Standing` 或者 `Crouching LF`
+
+> `Crouching` 蹲伏
+
+左边的 `Transition` 是站立到蹲伏，右边的 `Transitin` 是蹲伏到站立
+
+由于 `From Roll` 状态播放的 `ALS_N_LandRoll_F` 动画最后一帧是站立状态，所以需要通过 `N->CLF Transition` 从站立切换到蹲伏
+
+![](Image/050.png)
+
+那么核心的 `Standing` 和 `Crouching LF` 分别对应的就是上图的上半部分和下半部分
+
