@@ -127,7 +127,9 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 可以理解为，提前预设出很多套曲线数值模板，根据状态的不同，选择不同的曲线数值
 
+![](Image/035.png)
 
+以上图为例，根据 `RightShoulder` 是否是右键来走不同的 `Modify Curve`，这里 `Modify Curve` 使用的 `Apply Mode` 为 `Scale`，也就是将**乘以**
 
 #### PlayerCameraManager 中的计算
 
@@ -217,3 +219,99 @@ BPI_Get_3P_TraceParams() => FVector TraceOrigin, float TraceRadius, ETraceType T
 
 ### 角色动画蓝图
 
+ALS 的动画蓝图是分层流水线结构
+
+![](Image/032.jpg)
+
+- 基础 Pose 层(Base Poses)：确定 **站立**或者**蹲伏**的基础状态
+- 状态覆盖层(Overlay Layer)：根据状态选择动画叠加基础 Pose
+- 基础动画层(Base Layer)：根据运动状态确定叠加动画
+
+| Base Pose | Overlay Layer | Base Layer |
+| --- | --- | --- |
+| ![](Image/032.png) | ![](Image/033.png) | ![](Image/034.png) |
+| 根据状态选择蹲或者站动画 | 根据 OverlayState 选择动画，按 Q 切换状态 | 根据角色移动信息选择动画 |
+
+由于 `Base Poses` 和 `Overlay Layer` 结构比较简单，不做过多讨论。重点在于状态众多的 `Base Layer`
+
+从输出开始
+
+| Main Movement States | 状态机内容 |
+| --- | --- |
+| ![](Image/036.png) | ![](Image/037.png) |
+
+#### Main Movement States
+
+`Main Movement States` 中将状态分为两类：空中(Air)和地面(Ground)
+
+- 空中
+  - Fall：直接走下高点进入空中
+  - Jump：通过跳跃进入空中
+- 地面
+  - Land：落地后如果没有移动、旋转等操作，进入 Land，根据下降速度播放落地动画
+  - Land Movement：落地后如果有移动速度则会进入该状态，将落地动画与角色动画混合
+  - Grounded: 地面动画，当角色站在地面上时，无论走跑都是该状态（翻滚不算，翻滚在 `RagDoll States` 中）
+
+默认进入 `Grounded` 状态，当跳跃的时候 `Movement State` 会从 `Grounded` 进入 `InAir`，状态机也会进入 `InAir` 再根据是否是 `Jumped` 来选择进入 `Jump` 或者 `Fall`
+
+![](Image/039.png)
+
+当 `Jump` 的时候执行执行，在等待 0.1s 之后将 `Jumped` 设置为 `false` 因为状态机那个时候已经完成切换了
+
+##### Fall
+
+![](Image/040.png)
+
+`Fall` 分为两大块：空中动画和落地动画
+
+根据下降速度播放空中动画，`FallLoop`、`FallLoop_Fast`、`Flail`，然后叠加到 `Lean_Falling` 的偏移动画（前倾、后倾、左倾、右倾）得到最后的空中动画
+
+根据下降速度将 `Land_heavy` 和 `Land_Light` 进行混合，得到落地动画
+
+最后根据 `LandPrediction` 将空中对话与落地动画进行混合，并输出最后的结果
+
+`LandPrediction` 的计算在 `Calculate Land Prediction` 函数中
+
+![](Image/041.png)
+
+![](Image/042.png)
+
+如果下降速度小于 200(大于 -200)，则 `LandPrediction` 为0，表示使用 空中动画
+
+如果下降速度大于 200(小于 -200)，则根据速度进行胶囊体检测，如果没有检测到物体，则 `LandPrediction` 为 0；如果检测到物体，则根据 `Time` 从 `Land Prediction Curve` 曲线中取值
+
+`Hit Result` 中 `Time` 值为 **Time = Distance / WholeDistance**， `Distance` 为 `Trace Start` 到 `Location` 的距离， `WholeDistance` 为 `Trace Start` 到 `Trace End` 的距离
+
+![](Image/043.png)
+
+> `Land Prediction Curve` 是一个递减函数
+
+射线检测到的点越近，则 `Time` **越小**，对应的曲线值**越大**，那么落地动画的权重**更大**
+
+##### Jump
+
+![](Image/044.png)
+
+Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行混合，重要的其实在 `Jump States` 状态机中
+
+![](Image/045.png)
+
+根据跳跃起步时**左脚**还是**右脚**，分别走左脚跳或者右脚跳，然后进入跳跃动画，最后进入下落动画循环
+
+那么 ALS 是如何判断起步脚是左脚还是右脚呢？
+
+| 动画曲线 | Condition |
+| --- | --- |
+| ![](Image/046.png) | ![](Image/047.png) |
+
+以 `ALS_N_Run_F` 为例，动画中存在一个名为 `Feet_Position` 的曲线，当曲线值小于 0 为左脚，大于 0 为右脚
+
+##### Grounded
+
+
+
+#### Main Grounded States
+
+![](Image/038.png)
+
+在 `Main Movement States` 动画状态机中的 `Grounded` 引用了
