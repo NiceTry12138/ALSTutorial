@@ -240,7 +240,9 @@ ALS 的动画蓝图是分层流水线结构
 | --- | --- |
 | ![](Image/036.png) | ![](Image/037.png) |
 
-#### Main Movement States
+#### Base Layer
+
+##### Main Movement States
 
 `Main Movement States` 中将状态分为两类：空中(Air)和地面(Ground)
 
@@ -258,7 +260,7 @@ ALS 的动画蓝图是分层流水线结构
 
 当 `Jump` 的时候执行执行，在等待 0.1s 之后将 `Jumped` 设置为 `false` 因为状态机那个时候已经完成切换了
 
-##### Fall
+###### Fall
 
 ![](Image/040.png)
 
@@ -288,7 +290,7 @@ ALS 的动画蓝图是分层流水线结构
 
 射线检测到的点越近，则 `Time` **越小**，对应的曲线值**越大**，那么落地动画的权重**更大**
 
-##### Jump
+###### Jump
 
 ![](Image/044.png)
 
@@ -306,13 +308,13 @@ Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行
 
 以 `ALS_N_Run_F` 为例，动画中存在一个名为 `Feet_Position` 的曲线，当曲线值小于 0 为左脚，大于 0 为右脚
 
-##### Grounded
+###### Grounded
 
 ![](Image/048.png)
 
 直接使用了 `Main Grounded States` Pose
 
-#### Main Grounded States
+##### Main Grounded States
 
 ![](Image/038.png)
 
@@ -328,11 +330,31 @@ Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行
 
 > `Crouching` 蹲伏
 
-左边的 `Transition` 是站立到蹲伏，右边的 `Transitin` 是蹲伏到站立
+左边的 `Transition` 是站立到蹲伏，右边的 `Transition` 是蹲伏到站立
 
 由于 `From Roll` 状态播放的 `ALS_N_LandRoll_F` 动画最后一帧是站立状态，所以需要通过 `N->CLF Transition` 从站立切换到蹲伏
 
 ![](Image/050.png)
 
 那么核心的 `Standing` 和 `Crouching LF` 分别对应的就是上图的上半部分和下半部分
+
+`Standing` 中将站立分为三个层次：基础状态、状态细节、动作循环
+
+| 基础状态 | 状态细节 | 动作循环 |
+| --- | --- | --- |
+| ![](Image/051.png) | ![](Image/052.png) | ![](Image/053.png) |
+| 将站立分为移动和未移动，其中未移动的时候可以进入旋转状态 | 在 `Moving` 时可以根据移动细节进行很多状态的划分，走、跑、开始走、开始跑、第一次反向跑、第二次反向跑 | 在 `Moving` 和 `Waling` 的时候动画是循环的，这个时候根据在状态选择动画并设置参数即可 |
+
+`Crouching` 中将蹲伏分为两个层次：基础状态、动作循环
+
+| 基础状态 | 动作循环 |
+| --- | --- | 
+| ![](Image/054.png) | ![](Image/055.png) |
+| `Crouching` 的基础状态和 `Standing` 的状态细节内容相似 | 根据当前状态，选择移动动画 |
+
+> 这里的一个细节在于八方向移动
+
+| 动画循环 | 动画层 | Directional States |
+| --- | --- | --- |
+| ![](Image/057.png) | ![](Image/058.png) | ![](Image/056.png) |
 
