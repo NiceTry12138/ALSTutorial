@@ -489,3 +489,10 @@ Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行
 ![](Image/087.png)
 
 这个状态会强制将头朝中间
+
+#### 分层叠加 LayerBlending
+
+[ALSv4分层叠加系统](https://zhuanlan.zhihu.com/p/662774779)
+
+![](Image/088.jpg)
+
