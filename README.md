@@ -11,6 +11,7 @@
 上图展示 ALS 项目的控制按钮和介绍
 
 | 按键 | 作用 |
+| --- | --- |
 | 1 | 切换为速度方向模式 |
 | 2 | 切换为相机控制方向模式（默认） |
 | Z | 慢动作 |
@@ -372,6 +373,93 @@ Jump 与 Fall 状态有很多地方相似，都是将空中与落地动画进行
 
 > 旋转部分后面的内容几乎都是对该文章的复制
 
-##### 原地旋转
+##### Turn In Place
 
-##### 瞄准旋转
+![](Image/060.png)
+
+在 `ALS_AnimBP` 的 `UpdateGraph` 事件视图中，会每帧的区判断 `CanTurnInPlace` 也就是原地旋转
+
+![](Image/061.png)
+
+条件判断是 `Enable_Transition` 的值大于 0.99 以及当前是第三人称相机
+
+至于 `Enable_Transition` 曲线值的设置，是在 `CLF Not Moving` 和 `N Not Moving` 状态，也就是站立且不移动和蹲下且不一定两个状态
+
+| N Not Moving | CLF Not Moving |
+| --- | --- |
+| ![](Image/062.png) | ![](Image/063.png) |
+
+当其他状态时，`Enable_Transition` 值为 0，也就是不能触发自动旋转
+
+> `Enable_Transition` 之前是直接判断 >= 1，但是有误差，改成了 0.99
+
+前面 `CanTurnInPlace` 是判断旋转的**前置条件**是否满足
+
+后面 `Turn In Place Check` 是中进行具体数值的判断，判断旋转的**条件**是否满足
+
+| 旋转角度检查 | 旋转时间检查 |
+| --- | --- 
+| ![](Image/064.png) | ![](Image/065.png) |
+
+- `Aim Yaw Rate` 这一帧与上一帧 `Controller` 的 `Yaw` 轴旋转角度的偏差，当该值大于 `Aim Yaw Rate Limit` 值表示当前玩家仍然在高速移动相机，此时不用旋转，等待玩家确定相机朝向后再开始旋转
+- `Aiming Angle` 就是 `Character` 和 `Controller` 角度差距，当 `Yaw` 轴偏移超过 `Turn Check Min Angle` 的时候才会触发后续旋转
+- `Elapsed Delay Time` 延迟旋转时间，当符合旋转角度条件的时候，每帧加上 `Delta Time`，当该值大于指定值的时候，表示时间条件完成，开始旋转
+
+这里注意 `Map Range Clamped` 函数的使用，函数参数 `InRange` 值为 `(45, 180)`， `OutRange` 值为 `(0.75, 0)`，也就是说 **旋转角度** `Aiming Angle` 越大，则函数返回值越小，**旋转角度** 越小则函数返回值越大
+
+通过上面对 `Map Range Clamped` 的使用，实现了**旋转角度**越大则越快**触发旋转**的效果
+
+最后在 `Turn In Place` 真正开始触发旋转
+
+| 选择动画 | 播放动画 | 计算旋转速率 |
+| --- | --- | --- |
+| ![](Image/066.png) | ![](Image/067.png) | ![](Image/068.png) |
+
+![](Image/069.png)
+
+注意一下 `Turn In Place Asset Type` 结构体的内容，包括：动画资产、旋转角度、`Slot`槽名称、动画播放速率、是否修改旋转速率
+
+以 `N_TurnIP_L90` 预设的属性值为例，这里的槽名称为 `(N) Turn/Rotate`，对应前面截图 `N Not Moving` 状态中使用的槽的名称
+
+![](Image/070.png)
+
+也就是当使用 `Play Slot Animation As Dynamic Montage` 节点播放动画时，会使用 `(N) Turn/Rotate` 槽，当角色触发 `Turn In Place` 旋转时，不会执行前面的 `Modify Curve`， 此时 `Enable_Transition` 曲线的值为 0，避免了 `Turn In Place` 的时候再次触发 `Turn In Place`
+
+![](Image/071.png)
+
+注意 `(N) Turn/Rotate` 槽后面的 `Modify Curve` 节点，将之前计算出来的 `Rotation Scale` 乘上 `Rotation Amount` 曲线
+
+![](Image/072.png)
+
+曲线配置在旋转动画上，使用曲线配置是为了能够在旋转的时候根据动画匹配旋转角度，而不是以一个固定的旋转角度去改变角色角度
+
+至此，角色动画蓝图中操作和计算就完成了
+
+在角色的蓝图 `ALS_Base_CharacterBP` 中的计算在 `Update Grouded Rotation` 里面，改函数在 `Tick` 中每帧调用
+
+![](Image/073.png)
+
+> 动画帧率为 30
+
+#### Rotate In Place
+
+这是在第一人称或者瞄准状态时，相机角度与角色朝向存在偏差时触发的旋转
+
+在 `Rotate In Place` 的时候，根据角度偏差计算计算旋转方向和旋转速率 `Rotate Rate`
+
+![](Image/074.png)
+
+在 `Rotate In Place` 中计算出朝左、朝右旋转，然后根据 bool 值进入对应的状态
+
+| 旋转状态 | 曲线、速率设置 |
+| --- | --- |
+| ![](Image/075.png) | ![](Image/076.png) |
+
+最后依然触发角色蓝图 `ALS_Base_CharacterBP` 的 `Update Grouded Rotation` 函数
+
+![](Image/077.png) 
+
+> 这里与 `Turn In Place` 一样触发添加角色旋转，并且根据 `RotationAmount` 控制旋转速率
+
+##### 瞄准偏移
+
